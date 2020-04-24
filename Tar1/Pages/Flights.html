@@ -1,0 +1,392 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <link href="../Style.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <meta charset="utf-8" />
+    <title></title>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+    <script type="text/javascript"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+
+    <script>
+        var arr1 = [];
+        var myData;
+        var arr2 = [];
+        var idlist = [];
+        var price = 0;
+
+        $(document).ready(function () {
+           
+            $("#search").on("click", getFlight)
+            $("#myForm").submit(function (e) {
+
+                return false;
+            });
+
+        });
+
+        function getFlight() {
+
+            var selectedDate = document.getElementById('startDate').value;
+            var selectedDate2 = document.getElementById('endDate').value;
+            var now = new Date();
+            year = now.getFullYear();
+            month = now.getMonth() + 1;
+            day = now.getDate();
+            todayDate = year + "-" + month + "-" + day;
+            //validation of dates
+            if (Date.parse(todayDate) >= Date.parse(selectedDate) || Date.parse(todayDate) >= Date.parse(selectedDate2)) {
+                alert("Date must be in the future");
+                return null;
+            }
+
+            //validation of return date
+            if (selectedDate > selectedDate2) {
+                alert("Return date must be after flight date");
+                return null;
+            }
+         
+            origin = $("#orig").val();
+            destination = $("#dest").val();
+            startDate = $("#startDate").val();
+            endDate = $("#endDate").val();
+            //validation that airports isnt null
+               if (origin == "" || destination == "") {
+                alert("Please choose airport");
+                return null;
+            }
+
+            arrStart = startDate.split("-").reverse();
+            strStart = "";
+            for (x in arrStart) {
+                strStart += arrStart[x];
+                if (x < arrStart.length - 1) {
+                    strStart += "/";
+                }
+            }
+            arrEnd = endDate.split("-").reverse();
+            strEnd = "";
+            for (x in arrEnd) {
+                strEnd += arrEnd[x];
+                if (x < arrEnd.length - 1) {
+                    strEnd += "/";
+                }
+            }
+
+            ajaxCall("GET", "https://api.skypicker.com/flights?flyFrom=" + origin + "&to=" + destination + "&dateFrom=" + strStart + "&dateTo=" + strEnd + "&partner=shir", "", getFlightSuccessCB, getFlightErrorCB);
+        }
+        function getFlightSuccessCB(data)//Get flight success
+        {
+            myData = data;
+            ajaxCall("GET", "../api/Discounts", "", getdiscSuccessCB, getdiscErrorCB);//GET ALL DISCOUNTS
+
+        }
+        function getFlightErrorCB(err)//Error get flights
+        {
+            console.log(err)
+        }
+        function getdiscSuccessCB(data)//Get discounts success
+        {
+            arr5 = [];
+
+            for (var i = 0; i < data.length; i++) {
+
+                if (data[i].Origin == origin && data[i].Destination == destination && Date.parse(data[i].Startdate) <= Date.parse(startDate) && Date.parse(data[i].Enddate) >= Date.parse(endDate)) {
+                    discount2 = {
+                        "Airline": data[i].Airline,
+                        "Discount": data[i].Discount1
+                    }
+                    arr5.push(discount2);
+
+                }
+            }
+            c = 0;
+
+            for (var j = 0; j < myData.data.length; j++) {
+                c = 0;
+                for (var y = 0; y < arr5.length; y++) {
+
+                    if (arr5[y].Airline == myData.data[j].route[0].airline) {
+                        for (var k = 0; k < idlist.length; k++) {
+                            if (myData.data[j].id == idlist[k].Id) {
+                                price = (arr5[y].Discount) * 0.5;
+                            }
+                            else {
+                                price = (arr5[y].Discount) * 0.6;
+                            }
+                        }
+                        c = 1;
+                        str = "";
+                        str += "<div id='" + j + "'>"
+                        str += "Dates: " + strStart;
+                        str += " - " + strEnd + "<br />";
+                        str += "Price: <span style='text-decoration:line-through'>" + myData.data[j].conversion.EUR + "</span><span style='font-weight:bold; font-size:larger'> " + myData.data[j].conversion.EUR * ((100 - price) / 100) + " EUR (" + price + "% discount)</span><br /> ";
+                        str += "Route:<br />";
+
+                        for (var v = 0; v < myData.data[j].route.length; v++) {
+                            str += "from " + myData.data[j].route[v].cityFrom;
+                            str += " to " + myData.data[j].route[v].cityTo;
+                            str += " with " + myData.data[j].route[v].airline + " airline<br />";
+                        }
+                        str += "<button class='invite' onclick='orderdiv(" + j + ")'>Invite This Flight</button><button class='add' onclick='postToServer(this.parentNode.id )'>Add To Favorite</button><br /><br /></div>";
+                        document.getElementById("ph").innerHTML += str;
+                        break;
+                    }
+
+                }
+                if (c == 0) {
+                    str = "";
+                    str += "<div id='" + j + "'>"
+                    str += "Dates: " + strStart;
+                    str += " - " + strEnd + "<br />";
+                    str += "Price: " + myData.data[j].conversion.EUR + " EUR <br /> ";
+                    str += "Route:<br />";
+
+                    for (var v = 0; v < myData.data[j].route.length; v++) {
+                        str += "from " + myData.data[j].route[v].cityFrom;
+                        str += " to " + myData.data[j].route[v].cityTo;
+                        str += " with " + myData.data[j].route[v].airline + " airline<br />";
+                    }
+                    str += "<button class='invite' onclick='orderdiv(" + j + ")'>Invite This Flight</button><button class='add' onclick='postToServer(this.parentNode.id )'>Add To Favorite</button><br /><br /></div>";
+                    document.getElementById("ph").innerHTML += str;
+                }
+            }
+        }
+        function getdiscErrorCB(error)//Get disounts error
+        {
+        }
+
+        function orderdiv(num)//Put div of order flight
+        {
+
+            str = "<div class='container'id='order" + num + "' style='background-color:aliceblue'><h2> Invite My Flight</h2><div class='row'><div class='col'>";
+            str += "<form id='form2' onsubmit = 'return false'><label> Insert your Email: </label><input type='text' id='email' required pattern='[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'/><br />";
+            str += "<label> Choose Number of Passenger: </label><span><select oninput='putnames(" + num + ")' id='numofpass" + num + "' required>";
+            str += "<option value=''>Choose number</option><option value='1'>1</option><option value='2'>2</option>";
+            str += "<option value='3'>3</option><option value='4'>4</option><option value='5'>5</option>";
+            str += "</select></span><div id='names" + num + "'></div><input type='checkbox' required /><label> I read and agree with the terms</label><br />";
+            str += "<input type='submit' class='submit' value='Take me away!' onclick='insertcustomer(" + num + ")'/><button onclick='cancel(" + num + ")'>Cancel</button></form></div><div class='col'>";
+            str += "<img class='pic' src='../Photos/Azrieli_Spiral_VR_cam01.jpg' /></div></div></div>";
+
+            document.getElementById(num).innerHTML += str;
+
+        }
+        function putnames(num)//put in order div number of text input
+        {
+            str = "";
+            number = document.getElementById("numofpass" + num).value;
+            for (var i = 0; i < number; i++) {
+                str += "<label> Full Name:</label> <input type='text' id='name" + i + "'required/><br/>";
+            }
+            document.getElementById("names" + num).innerHTML = str;
+        }
+        function insertcustomer(index)//insert to DB customer and order flight
+        {
+            num = document.getElementById("numofpass" + index).value;
+            email = document.getElementById("email").value;
+            str = "";
+            for (var i = 0; i < num; i++) {
+                str += document.getElementById("name" + i).value + "-->";
+            }
+            customer = {
+
+                "Email": email,
+                "Fullnames": str,
+                "Agree": 1
+            }
+            console.log(customer);
+            ajaxCall("POST", "../api/Customers", JSON.stringify(customer), postcustomerSuccessCB, postcustomerErrorCB);
+
+            strRoute = "";
+
+            for (var i = 1; i < myData.data[index].route.length; i++) {
+                if (i < myData.data[index].route.length - 1)
+                    strRoute += (myData.data[index].route[i].cityFrom) + "-->";
+                else {
+                    strRoute += (myData.data[index].route[i].cityFrom);
+                }
+            }
+            order = {
+                "Id": myData.data[index].id,
+                "Origin": myData.data[index].flyFrom,
+                "Destination": myData.data[index].flyTo,
+                "StartDate": strStart,
+                "EndDate": strEnd,
+                "Price": myData.data[index].conversion.EUR,
+                "Route": strRoute,
+                "Airlinecompany": myData.data[index].airlines[0],
+                "Email": email
+            }
+            console.log(order);
+            ajaxCall("POST", "../api/Orders", JSON.stringify(order), postOrderSuccess, postOrderError);
+
+        }
+        function postcustomerSuccessCB(data)//Success insert customer
+        {
+            console.log(data);
+
+        }
+        function postcustomerErrorCB(error)//Error insert customer
+        {
+
+            console.log("error");
+        }
+        function postOrderSuccess(data) //Success insert flight to DB
+        {
+
+            alert("your order is complete");
+
+        }
+        function postOrderError(error) //Error insert flight
+        {
+            alert("your order is not good");
+            console.log("error");
+        }
+
+        function cancel(index)//In case of user doeswn want order the flight, this function hide the order div
+        {
+            $("#order" + index).hide();
+            return false;
+        }
+
+        function postToServer(index)//Insert favorite flight to local storage and DB
+        {
+            strRoute = "";
+
+            for (var i = 1; i < myData.data[index].route.length; i++) {
+                if (i < myData.data[index].route.length - 1)
+                    strRoute += (myData.data[index].route[i].cityFrom) + "-->";
+                else {
+                    strRoute += (myData.data[index].route[i].cityFrom);
+                }
+            }
+            flight = {
+                "Idflight": myData.data[index].id,
+                "Origin": origin,
+                "Destination": destination,
+                "StartDate": strStart,
+                "EndDate": strEnd,
+                "Price": myData.data[index].conversion.EUR,
+                "Route": strRoute,
+                "Airlinecompany": myData.data[index].airlines[0]
+            }
+
+            localStorage.setItem(localStorage.length.toString(), JSON.stringify(flight));
+
+            ajaxCall("POST", "../api/Flights", JSON.stringify(flight), post1FlightSuccessCB, post1FlightErrorCB);
+
+        }
+        function post1FlightSuccessCB(data)//Success insert favorite flight
+        {
+        }
+        function post1FlightErrorCB(err)//Error insert favorite flight
+        {
+            console.log(err);
+        }
+
+        function getlistairports()//Get all airports code from DB
+        {
+            ajaxCall("GET", "../api/Airports", "", getsuccessa, geterrora);
+        }
+        function getsuccessa(data)//Success get airports code
+        {
+            ajaxCall("GET", "../api/Orders", "", getidSuccessCB, getidErrorCB);//Get all orders from DB
+            str = "<select id='orig' required ><option value='' >Choose Airport </option> ";
+            str1 = "<select id='dest' required><option value='' >Choose Airport </option> ";
+
+            for (var i = 0; i < data.length; i++) {
+                arr2.push(data[i].Code);
+                str1 += " <option value='" + data[i].Code + "'>" + data[i].Code + "</option>";
+                str += " <option value='" + data[i].Code + "'>" + data[i].Code + "</option>";
+            }
+
+            str += "</select>";
+            str1 += "</select>";
+            document.getElementById("origin").innerHTML = str;
+
+            document.getElementById("destination").innerHTML = str1;
+
+        }
+        function geterrora(err)//Error get airports code
+        {
+            console.log(err);
+        }
+        function getidSuccessCB(data)// Success get orders flights
+        {
+            idlist = data;
+        }
+        function getidErrorCB(error)//Error get orders flights
+        {
+            console.log(error);
+        }
+        function favorite()//Take favorite flights from local storage and present to user
+        {
+          
+            favestr = "";
+            document.getElementById("ph").innerHTML = favestr;
+            for (var i = 0; i < localStorage.length; i++) {
+
+                flight = JSON.parse(localStorage.getItem(i));
+                
+                favestr += "From: " + flight.Origin + "<br />"
+                    + "To: " + flight.Destination + "<br />" +
+                    "Dates: " + flight.StartDate + " - " + flight.EndDate + "<br />" +
+                    "Price: " + flight.Price + "<br /> Routes: ";
+                if (flight.Route == "") {
+                    favestr += "No Connection (:  <hr />";
+                }
+                else {
+                    arr3 = flight.Route.split("-->");
+                    for (var j = 0; j < arr3.length; j++) {
+                        favestr += arr3[j] + "<br />";
+                    }
+                    favestr += "<hr />";
+                }
+            }
+            document.getElementById("ph").innerHTML = favestr;
+        }
+       
+    </script>
+</head>
+<body onload="getlistairports()">
+    <div class="container">
+        <button id="Manager" onclick="location.href = 'Login.html'">
+            I'm a manager
+        </button>
+        <div class="page-header">
+            <h1> Benny & Anat tours</h1><br />
+        </div>
+
+        <div class="row">
+            <form id="myForm">
+
+                <div id="form1" class="col">
+                    <span>Fly From: </span><span id="origin"></span><br />
+                    <span>Fly To: </span><span id="destination"></span><br />
+                    <span>Date Of Start: </span><input type="date" value="2020-02-02" id="startDate" required /><br />
+                    <span>Date Of End: </span><input type="date" value="2020-02-08" id="endDate" required /><br />
+
+                    <br /><input type="submit" id="search" value="Search" /><br />
+                    <button id="Favorites" onclick="favorite()">
+                        My Favorites Flights
+                    </button>
+                </div>
+            </form>
+
+            <div class="col">
+                <img id="pic" src="../Photos/vacation.jpg" />
+            </div>
+        </div>
+        <div id="memory"></div>
+    </div>
+    <div id="ph">
+    </div>
+</body>
+</html>

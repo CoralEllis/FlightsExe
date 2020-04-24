@@ -1,0 +1,557 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <link href="../Style.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+    <script type="text/javascript"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css" />
+    <script type="text/javascript" src="//cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+    <style>
+        body {
+            background-color: aliceblue;
+        }
+    </style>
+
+    <script>
+        arr2 = [];
+        discountList = [];
+        managers = [];
+        $(document).ready(function () {
+
+            $("#disform1").submit(function (e) {
+
+                return false;
+            });
+            $("#addAdmin").submit(function (e) {
+
+                return false;
+            });
+        });
+
+        function getlistairports()
+        //Onload function - get information from DB
+        {
+            //Hide divs at first
+            document.getElementById("discable").style.display = "none";
+            document.getElementById("orders1").style.display = "none";
+            document.getElementById("tablefave").style.display = "none";
+            document.getElementById("disform").style.display = "none";
+            document.getElementById("editDiv").style.display = "none";
+            //get airports, discounts and favorite flights from DB
+            ajaxCall("GET", "../api/Airports", "", getsuccessa, geterrora);
+            ajaxCall("GET", "../api/Discounts", "", getdiscoSuccessCB, getdiscoErrorCB);
+            ajaxCall("GET", "../api/Flights", "", getfavoriteSuccessCB, getfavoriteErrorCB);
+            ajaxCall("GET", "../api/Usermanagers", "", successman, errormanCB);//Get all managers from DB
+        }
+        function getsuccessa(data)
+        //Success get airports from DB and put in forms
+        {
+            str = "<select id='orig' required ><option value =''>Choose Airport </option> ";
+            str1 = "<select id='dest' required><option value=''>Choose Airport </option> ";
+            for (var i = 0; i < data.length; i++) {
+                arr2.push(data[i].Code);
+                str1 += " <option value='" + data[i].Code + "'>" + data[i].Code + "</option>";
+                str += " <option value='" + data[i].Code + "'>" + data[i].Code + "</option>";
+            }
+
+            str += "</select>";
+            str1 += "</select>";
+            document.getElementById("origin").innerHTML = str;
+            document.getElementById("originu").innerHTML = str.replace("orig", "origu");
+            document.getElementById("destination").innerHTML = str1;
+            document.getElementById("destinationu").innerHTML = str1.replace("dest", "destu");;
+            ajaxCall("GET", "../api/Orders", "", getOrderSuccessCB, getOrderErrorCB);//get orders from DB
+
+        }
+        function successman(data)
+        //Success get managers
+        {
+            managers = data;
+          
+        }
+
+        function errormanCB(err)
+        //error get managers
+        {
+            console.log(err);
+        }
+        function geterrora(err)
+        //Error get airports from DB
+        {
+            console.log(err);
+        }
+        function getOrderSuccessCB(data)
+        //Success get orders from DB and put in data table
+        {
+            console.log(data);
+            $('#orderdatatable').DataTable({
+                data: data,
+                columns: [
+                    { data: 'Origin' },
+                    { data: 'Destination' },
+                    { data: 'StartDate' },
+                    { data: 'EndDate' },
+                    { data: 'Price' },
+                    { data: 'Route' },
+                    { data: 'Airlinecompany' }
+                ],
+
+            });
+        }
+        function getOrderErrorCB(error)
+        //Error get airports from DB
+        { }
+        function favoriteflight() {
+            //Toggle div of favorite table
+            x = document.getElementById("tablefave");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+        function getfavoriteSuccessCB(data) {
+            //Success get favorite flight from DB and put in data table
+            $('#favedatatable').DataTable({
+                data: data,
+                columns: [
+                    { data: 'Airlinecompany' },
+                    { data: 'Origin' },
+                    { data: 'Destination' },
+                    { data: 'StartDate' },
+                    { data: 'EndDate' },
+                    {
+                        data: 'Route'},
+                      
+                    { data: 'Count' }
+                ],
+
+            });
+
+        }
+        function getfavoriteErrorCB(error)
+        //Error get favorite flight from DB
+        {
+            alert("error");
+            console.log(error);
+        }
+        function discountform()
+        //Toggle discount form div
+        {
+
+            x = document.getElementById("disform");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+
+            }
+        }
+        function tablediscounts()
+        ////Toggle discount table div
+        {
+            y = document.getElementById("editDiv");
+            x = document.getElementById("discable");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            }
+            else {
+                x.style.display = "none";
+            }
+
+        }
+        function getdiscoSuccessCB(data)
+        //Error get discount from DB and put in data table
+        {
+            discountList = data;
+            $('#discountdatatable').DataTable({
+                data: data,
+                columns: [
+                    { data: 'Id' },
+                    { data: 'Airline' },
+                    { data: 'Origin' },
+                    { data: 'Destination' },
+                    {
+                        data: 'Startdate', render: function (data, type, row, meta) {
+                            x = data.split("-");
+                            x = x.reverse();
+                            str = x[0] + "/" + x[1] + "/" + x[2];
+                            return str;
+                        }
+                    },
+                    {
+                        data: 'Enddate', render: function (data, type, row, meta) {
+                            x = data.split("-");
+                            x = x.reverse();
+                            str = x[0] + "/" + x[1] + "/" + x[2];
+                            return str;
+                        }
+                    },
+                    {
+                        data: 'Discount1', render: function (data, type, row, meta) {
+
+                            return data + "%";
+                        }
+                    },
+                    {
+                        render: function (data, type, row, meta) {
+
+                            let discountId = row.Id;
+                            editBtn = "<button id ='editBtn" + discountId + "' onclick='editdiscount(" + discountId + ")'> Edit </button>";
+                            deleteBtn = "<button id ='deleteBtn" + discountId + "'onclick='deletediscount(" + discountId + ")'> Delete </button>";
+                            return editBtn + deleteBtn;
+                        }
+                    }
+                ],
+
+            });
+
+        }
+        function getdiscoErrorCB(error)
+        //Error get discount from DB
+        { }
+        function insertdiscount()
+        //Insert discount to DB
+        {
+            //validation of dates
+            var selectedDate = document.getElementById('startdis').value;
+            var selectedDate2 = document.getElementById('enddis').value;
+            var now = new Date();
+            year = now.getFullYear();
+            month = now.getMonth() + 1;
+            day = now.getDate();
+            todayDate = year + "-" + month + "-" + day;
+            //validation of dates
+            if (Date.parse(todayDate) >= Date.parse(selectedDate) || Date.parse(todayDate) >= Date.parse(selectedDate2)) {
+                alert("Date must be in the future");
+                return null;
+            }
+
+            //validation of return date
+            if (selectedDate >= selectedDate2) {
+                alert("Return date must be after flight date");
+                return null;
+            }
+            //validation of airports
+            origin = $("#orig").val();
+            destination = $("#dest").val();
+            if (origin == "" || destination == "") {
+                alert("Please choose airport");
+                return null;
+            }
+
+
+            discount = {
+                "Airline": document.getElementById("airline").value,
+                "Origin": document.getElementById("orig").value,
+                "Destination": document.getElementById("dest").value,
+                "Startdate": document.getElementById("startdis").value,
+                "Enddate": document.getElementById("enddis").value,
+                "Discount1": document.getElementById("disc").value
+
+            }
+            ajaxCall("POST", "../api/Discounts", JSON.stringify(discount), postdisSuccessCB, postdisErrorCB);
+
+
+
+        }
+        function postdisSuccessCB(data)
+        //Success post discount
+        {
+            alert("Discount table updated successfuly!");
+            location.reload();
+        }
+        function postdisErrorCB(error)
+        //Error post discount
+        {
+            alert("error");
+
+        }
+        function orderstable()
+        //Toggle order table
+        {
+            x = document.getElementById("orders1");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+
+
+        }
+        function deletediscount(discountId) {
+            var result = confirm("Do you want to delete?");
+            if (result) {
+                x = JSON.stringify(discountId);
+                ajaxCall("DELETE", "../api/Discounts/" + x, "", DeldiscoSuccessCB, DeldiscoErrorCB);
+            }
+            else return null;
+        }
+        function DeldiscoSuccessCB(data) {
+            location.reload();
+
+        }
+        function DeldiscoErrorCB(error) {
+
+        }
+        function editdiscount(discountId)
+        //Show update div and insert discount information
+        {
+            $('#editDiv').show();
+            var d;
+            for (var i = 0; i < discountList.length; i++) {
+                if (discountList[i].Id == discountId) {
+                    d = discountList[i];
+                }
+            }
+
+            $('#airlineu').val(d.Airline);
+            $('#origu').val(d.Origin);
+            $('#destu').val(d.Destination);
+            $('#startdisu').val(d.Startdate);
+            $('#enddisu').val(d.Enddate);
+            $('#discu').val(d.Discount1);
+            $('#discountid1').val(discountId);
+        }
+        function UpdateDiscount()
+        //put the update discount in DB
+        {
+            var selectedDate = document.getElementById('startdisu').value;
+            var selectedDate2 = document.getElementById('enddisu').value;
+            var now = new Date();
+            year = now.getFullYear();
+            month = now.getMonth() + 1;
+            day = now.getDate();
+            todayDate = year + "-" + month + "-" + day;
+            //validation of dates
+            if (Date.parse(todayDate) >= Date.parse(selectedDate) || Date.parse(todayDate) >= Date.parse(selectedDate2)) {
+                alert("Date must be in the future");
+                return null;
+            }
+
+            //validation of return date
+            if (selectedDate >= selectedDate2) {
+                alert("Return date must be after flight date");
+                return null;
+            }
+            //validation of airports
+            origin = $("#origu").val();
+            destination = $("#destu").val();
+            if (origin == "" || destination == "") {
+                alert("Please choose airport");
+                return null;
+            }
+
+
+
+            x = $('#discountid1').val();
+            d = {
+                "Airline": $('#airlineu').val(),
+                "Origin": $('#origu').val(),
+                "Destination": $('#destu').val(),
+                "Startdate": $('#startdisu').val(),
+                "Enddate": $('#enddisu').val(),
+                "Discount1": $('#discu').val()
+            }
+
+            ajaxCall("PUT", "../api/Discounts/" + x, JSON.stringify(d), PutDisSuccessCB, PutDisErrorCB);
+            location.reload();
+        }
+        function PutDisSuccessCB(data)
+        //Success update discount at DB
+        {
+            alert("Discount updated!");
+        }
+        function PutDisErrorCB(error)
+        // Error update discount
+        {
+
+        }
+        function AddAdmin()
+        //Put form of add admin at the div
+        {
+            str = "<form id='addAdmin' onsubmit = 'return false'><label>Username: </label><input type='text' id='user' required pattern='[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$' /><label>Password:</label><input type='text' id='pass' required/>";
+            str += "<button onclick='SaveMan()'> Save</button></form>";
+            document.getElementById("addman").innerHTML = str;
+
+        }
+        function SaveMan()
+        //Insert new manager to DB
+        {
+            M = {
+                "Username": $("#user").val(),
+                "Password": $("#pass").val()
+            }
+
+            ajaxCall("POST", "../api/Usermanagers", JSON.stringify(M), PostMan, PostManError);
+            $("#addman").hide();
+        }
+        function PostMan(data)
+        // Success insert new manager to DB
+        {
+            alert("The data was updated")
+        }
+        function PostManError(error)
+        //Error insert manager to DB
+        {
+            console.log(error);
+        }
+        function DeleteAdmin()
+        //Put form of delete admin at the div
+        {
+
+            str = "<form onsubmit ='DelMan()' id='deleteman11'><select id=user required><option value=''>Select Manager </option>";
+            for (var i = 0; i < managers.length; i++) {
+                str += "<option valaue='" + managers[i].Username + "'> " + managers[i].Username + "</option>"
+            }
+            str += "</select>";
+            str += "<input type='submit' value='Delete' /></form>";
+            console.log(str);
+            document.getElementById("addman").innerHTML = str;
+        }
+        function DelMan()
+        //Delete admin from DB
+        {
+            d = $("#user").val();
+            ajaxCall("DELETE", "../api/Usermanagers/" + d, "", DelManS, DelManE);
+        }
+        function DelManS(data)
+        // Success delete manager
+        {
+            alert("goood");
+
+        }
+        function DelManE(err)
+        //Error delete manager
+        {
+            console.log(err);
+        }
+    </script>
+</head>
+<body onload="getlistairports()">
+
+    <button onclick="AddAdmin()"> Add Admin</button>
+
+    <button onclick="DeleteAdmin()"> Delete Admin</button>
+    <div id="addman">
+    </div>
+    <div class="container">
+        <h1><span>&#9992;</span> Manager Page <span>&#9992;</span></h1><br />
+
+        <div id="favorite">
+            <h2 onclick="favoriteflight()"><span>&#128077;&#127997;</span> Table of Favorites Flight <span>&#128077;&#127997;</span></h2>
+            <div id="tablefave">
+                <table id="favedatatable">
+                    <thead>
+                        <tr>
+                            <th>Airline Company</th>
+                            <th>Origin</th>
+                            <th>Destination</th>
+                            <th>StartvDate</th>
+                            <th>EndcDate</th>
+                            <th>Route</th>
+                            <th>Number of Favorite</th>
+                        </tr>
+                    </thead>
+                </table>
+
+
+            </div>
+
+        </div>
+        <br />
+        <div id="discounts">
+            <h2 onclick="discountform()">&#129297; Click Here to Insert Discount &#129297;</h2>
+            <div id="disform">
+                <form id="disform1" onsubmit='insertdiscount()'> 
+                    <label> Insert Airline Company</label><input id="airline" type="text" required /><br />
+                    <label> Origin</label> <span id="origin"></span><br />
+                    <label> Destination</label><span id="destination"></span><br />
+                    <label> Start Discount Range Date</label><input type="date" id="startdis" required /><br />
+                    <label> End Discount Range Date</label><input type="date" id="enddis" required /><br />
+                    <label> Discount</label><input type="number" id="disc" required /><br />
+                    <input type='submit' class='submit' value='Submit' /><br />
+                </form>
+
+
+            </div>
+
+        </div>
+        <br />
+
+        <div id="discountable">
+            <h2 onclick="tablediscounts()">&#129297; Click Here To Watch All Discounts &#129297;</h2>
+            <div id="discable">
+                <table id="discountdatatable">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Airlinecompany</th>
+                            <th>Origin</th>
+                            <th>Destination</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Discount</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                </table>
+
+            </div>
+        </div>
+        <div id="editDiv">
+            <h2>Edit Discount </h2>
+            <form id="updatedform" onsubmit="UpdateDiscount()">
+                <label> Insert Airline Company</label><input id="airlineu" type="text" required /><br />
+                <label> Origin</label> <span id="originu"></span><br />
+                <label> Destination</label><span id="destinationu"></span><br />
+                <label> Start Discount Range Date</label><input type="date" id="startdisu" required /><br />
+                <label> End Discount Range Date</label><input type="date" id="enddisu" required /><br />
+                <label> Discount</label><input type="number" id="discu" required /><br />
+                <input type="text" id="discountid1" style="display:none" />
+                <input type="submit" id="search" value="Save" />
+            </form>
+
+
+
+
+        </div>
+        <br />
+        <div id="ordertable">
+            <h2 onclick="orderstable()"><span>&#9993;</span> Click Here to Watch Orders Table <span>&#9993;</span></h2>
+            <div id="orders1">
+                <table id="orderdatatable">
+                    <thead>
+                        <tr>
+                            <th>Origin</th>
+                            <th>Destination</th>
+                            <th>StartDate</th>
+                            <th>EndDate</th>
+                            <th>Price</th>
+                            <th>Route</th>
+                            <th>Airlinecompany</th>
+                        </tr>
+                    </thead>
+                </table>
+
+            </div>
+
+        </div>
+        <br />
+    </div>
+
+
+</body>
+</html>

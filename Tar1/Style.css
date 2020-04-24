@@ -1,0 +1,88 @@
+﻿table, #orders1, #discable, #tablefave {
+    font-family: Calibri;
+    border: 1px solid #008CBA;
+    color: darkblue;
+    text-align: center;
+}
+#favorite, #discounts, #ordertable, #discountable {
+    border: 1px dotted #008CBA;
+    text-align: center;
+    margin:auto;
+}
+
+
+#ph {
+    background-color: lightblue;
+    border: 1px solid darkblue;
+    color: darkblue;
+    margin: auto;
+    padding-left: 10px;
+}
+
+#memory {
+    margin: auto;
+    padding-left: 10px;
+}
+
+button, #search, .submit{
+    background-color: #008CBA;
+    color: white;
+    font-family: Calibri;
+}
+input , submit, select, #form1{
+    background-color: aliceblue;
+}
+
+#pic, .pic {
+    display: block;
+    margin: auto;
+    margin-right: 200px;
+    height: 200px;
+    width: 400px;
+    text-align: center;
+}
+.pic{
+    width:300px;
+   
+
+}
+
+#form1, h1,#login ,#form2, #disform, form{
+    margin: auto;
+    padding-top: 50px;
+    padding-left: 30px;
+    color: #66CCFF;
+    font-family: Calibri;
+}
+h2 {
+    color: #008CBA;
+}
+
+
+h1,h2 {
+    text-align: center;
+}
+
+input[type=text], input[type=date], #dest, #orig, #destu, #origu, #numofpass {
+    border: none;
+    border-bottom: 1px solid #66CCFF;
+    color: darkblue;
+    font-family: Calibri;
+    text-align: center;
+}
+
+hr {
+    border: 0.5px dotted darkblue;
+}
+
+#Manager {
+    margin-left: 900px;
+    margin-top: 20px;
+    text-decoration: solid;
+}
+#login {
+    margin: 50px;
+
+}
+
+

@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <link href="../Style.css" rel="stylesheet" />
+
+    <meta charset="utf-8" />
+    <title></title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <meta charset="utf-8" />
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+    <script type="text/javascript"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+    <script src="ajaxCalls.js"></script>
+    <script>
+        var arr;
+        function login()
+        //Get all usuers of manager
+        {
+                   
+            ajaxCall("GET", "../api/Usermanagers", "", successman, errormanCB);
+        }
+
+        function successman(data)
+        //Checks if the username and passwors is valid and set data in localstorage 
+        {
+            arr = data;
+           
+             users = $("#user").val();
+            passw = $("#password").val();
+      
+            
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].Username == users && data[i].Password == passw) {
+                    window.location.href = "Manager.html";
+                    return null;
+                }
+            }
+            
+            alert("There is something wrong with your details");         
+        }
+        function errormanCB(error) {
+            alert(error);
+            console.log(error);
+        }
+
+
+    </script>
+    <style>
+       body{
+           background-color:aliceblue;
+       }
+       img{
+
+           height:300px;
+           width:400px;
+          margin-left:800px;
+       }
+       h1{
+             color: #008CBA;
+
+       }
+    </style>
+
+
+</head>
+<body>
+    <div class="container">
+        <form id="login"  onsubmit="login()">
+            <h1> <strong>Log In Page </strong></h1>
+            
+            <label> Please enter yours details:</label><br />
+            <span> Your Email  </span><input type="text" id="user" value="Benny@gmail.com" required/><br />
+            <span> Password  </span><input type="text"  id="password" value="123456" required/><br />
+            <input type="submit" id="search" value="Log In"/>
+        </form>
+       <img src="http://munadepilacionconhilo.com/images/homepage/login1.jpg" />
+    </div>
+
+</body>
+</html>
